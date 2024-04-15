@@ -4,11 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { hover } from "@/lib/hover";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
+//udah dari sono nya
+import {signIn } from "next-auth/react";
+import { useToast } from "@/components/ui/use-toast";
 
 //object input form nya
 type UserAuthForm = {
@@ -29,7 +32,9 @@ const schema = yup
 function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
 
+  const {toast} = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
   //component react hook form
   //register berfungsi mendaftarkan validator untuk component sesuai name nya
   //yupresolver harus memiliki validasi input yang sama dg object input nya
@@ -41,8 +46,29 @@ function SignInForm() {
     resolver: yupResolver(schema),
   });
 
-  const onSubmit = (data: UserAuthForm) => {
-    console.log("onSubmit : ", data);
+  const onSubmit = async (data: UserAuthForm) => {
+    try {
+      //ini blum bisa
+      const user = await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        callbackUrl: searchParams.get("callbackUrl") || "/",
+        redirect: false,
+      })
+      console.log('ini user', user);
+      if(!user?.error){
+        router.push(user?.url || "/"); 
+      }else{
+        toast({
+          title: "Something went wrong",
+          description: "Please check your email and password",
+          variant: "destructive",
+          duration: 2000,
+        });
+      }
+    } catch (error) {
+      console.log("onSubmit : ", data);
+    }
   };
 
   return (
@@ -83,7 +109,7 @@ function SignInForm() {
         type="submit"
         className={cn("w-[320px] bg-leaf mt-6", hover.shadow)}
         onClick={() => {
-          // router.push("/");
+          router.push("/");
         }}
       >
         Masuk
