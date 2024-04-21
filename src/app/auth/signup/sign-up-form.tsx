@@ -8,10 +8,11 @@ import { cn } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { useRegisterMutation } from "@/services/auth";
 
 //object input form nya
 type UserSignUpForm = {
-  fullname: string;
+  name: string;
   email: string;
   password: string;
   confirm_password: string;
@@ -20,7 +21,7 @@ type UserSignUpForm = {
 //validation input menggunakan yup
 const schema = yup
   .object({
-    fullname: yup.string().min(10).required() ,
+    name: yup.string().min(10).required() ,
     email: yup.string().email().required(),
     password: yup.string().min(6).required(),
     confirm_password: yup.string().oneOf([yup.ref("password")], "Password must match").required(),
@@ -42,8 +43,15 @@ function SignUpForm() {
       resolver: yupResolver(schema),
     });
   
-    const onSubmit = (data: UserSignUpForm) => {
-      console.log("onSubmit : ", data);
+    const [registerMutation] = useRegisterMutation();
+
+    const onSubmit = async (data: UserSignUpForm) => {
+      try {
+        const res = await registerMutation(data);
+        console.log("result register : ", JSON.stringify(res));
+      } catch (error) {
+        console.log("onSubmit : ", data);
+      }
     };
 
   return (
@@ -55,8 +63,8 @@ function SignUpForm() {
         className="w-[100%] p-4 rounded-sm mt-4"
         type="text"
         placeholder="Nama Lengkap"
-        {...register("fullname")}
-        error={errors.fullname?.message}
+        {...register("name")}
+        error={errors.name?.message}
       />
       <Input
         className="w-[100%] p-4 rounded-sm mt-8"
